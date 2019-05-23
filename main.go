@@ -11,6 +11,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/akuan/gen/dbmeta"
+	gtmpl "github.com/akuan/gen/template"
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/droundy/goopt"
 	"github.com/jimsmart/schema"
@@ -19,8 +21,6 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/serenize/snaker"
-	"github.com/smallnest/gen/dbmeta"
-	gtmpl "github.com/smallnest/gen/template"
 )
 
 var (
@@ -110,6 +110,7 @@ func main() {
 
 	// generate go files for each table
 	for _, tableName := range tables {
+		fmt.Printf("tableName %v \n", tableName)
 		structName := dbmeta.FmtFieldName(tableName)
 		structName = inflection.Singular(structName)
 		structNames = append(structNames, structName)

@@ -114,6 +114,7 @@ func generateFieldsTypes(db *sql.DB, columns []*sql.ColumnType, depth int, jsonA
 		key := c.Name()
 		valueType := sqlTypeToGoType(strings.ToLower(c.DatabaseTypeName()), nullable, gureguTypes)
 		if valueType == "" { // unknown type
+			fmt.Printf(" unknown type %s \n", c.DatabaseTypeName())
 			continue
 		}
 		fieldName := FmtFieldName(stringifyFirstChar(key))
@@ -149,7 +150,7 @@ func generateFieldsTypes(db *sql.DB, columns []*sql.ColumnType, depth int, jsonA
 
 func sqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 	switch mysqlType {
-	case "tinyint", "int", "smallint", "mediumint":
+	case "tinyint", "int", "integer", "smallint", "int2", "int4", "mediumint":
 		if nullable {
 			if gureguTypes {
 				return gureguNullInt
@@ -194,7 +195,7 @@ func sqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 			return sqlNullFloat
 		}
 		return golangFloat32
-	case "binary", "blob", "longblob", "mediumblob", "varbinary":
+	case "binary", "blob", "longblob", "mediumblob", "varbinary", "bytea":
 		return golangByteArray
 	}
 	return ""
