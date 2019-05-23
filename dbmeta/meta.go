@@ -71,6 +71,7 @@ const (
 	golangByteArray  = "[]byte"
 	gureguNullInt    = "null.Int"
 	sqlNullInt       = "sql.NullInt64"
+	golangBool       = "bool"
 	golangInt        = "int"
 	golangInt64      = "int64"
 	gureguNullFloat  = "null.Float"
@@ -82,6 +83,7 @@ const (
 	sqlNullString    = "sql.NullString"
 	gureguNullTime   = "null.Time"
 	golangTime       = "time.Time"
+	golangDecimal    = "decimal.Decimal"
 )
 
 // GenerateStruct generates a struct for the given table.
@@ -166,6 +168,8 @@ func sqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 			return sqlNullInt
 		}
 		return golangInt64
+	case "bit", "bool", "boolean":
+		return golangBool
 	case "char", "enum", "varchar", "longtext", "mediumtext", "text", "tinytext":
 		if nullable {
 			if gureguTypes {
@@ -179,7 +183,7 @@ func sqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 			return gureguNullTime
 		}
 		return golangTime
-	case "decimal", "double":
+	case "decimal", "numeric", "double":
 		if nullable {
 			if gureguTypes {
 				return gureguNullFloat
