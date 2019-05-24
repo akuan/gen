@@ -11,8 +11,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/akuan/gen/dbmeta"
-	gtmpl "github.com/akuan/gen/template"
+	"gen/dbmeta"
+
+	gtmpl "gen/template"
+
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/droundy/goopt"
 	"github.com/jimsmart/schema"
