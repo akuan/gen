@@ -1,6 +1,7 @@
 package dbmeta
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -44,5 +45,19 @@ func Test_Copy(t *testing.T) {
 
 	if !reflect.DeepEqual(expected, dst) {
 		t.Errorf("expect: %+v, but got %+x", expected, dst)
+	}
+}
+
+func TestStrFirstToLower(t *testing.T) {
+	str := "Card"
+	tar := "card"
+	res := strFirstToLower(str)
+	fmt.Printf("%v strFirstToLower is %v \n", str, res)
+	str = "ID"
+	tar = "ID"
+	res = strFirstToLower(str)
+	fmt.Printf("%v strFirstToLower is %v \n", str, res)
+	if res != tar {
+		t.Error("Not equal")
 	}
 }

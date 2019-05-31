@@ -2,18 +2,10 @@ package template
 
 var ModelTmpl = `package {{.PackageName}}
 
-import (
-    "database/sql"
-    "time"
-
-    "github.com/guregu/null"
+import (     
+    "time" 
 )
-
-var (
-    _ = time.Second
-    _ = sql.LevelDefault
-    _ = null.Bool{}
-)
+ 
 
 
 type {{.StructName}} struct {

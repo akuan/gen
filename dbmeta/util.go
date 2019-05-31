@@ -104,6 +104,31 @@ func lintFieldName(name string) string {
 	return string(runes)
 }
 
+func strFirstToUpper(str string) string {
+	if len(str) < 1 {
+		return ""
+	}
+	strArry := []rune(str)
+	if strArry[0] >= 97 && strArry[0] <= 122 {
+		strArry[0] -= 32
+	}
+	return string(strArry)
+}
+
+func strFirstToLower(str string) string {
+	if len(str) < 1 {
+		return ""
+	}
+	if commonInitialisms[str] {
+		return str
+	}
+	strArry := []rune(str)
+	if unicode.IsUpper(strArry[0]) {
+		strArry[0] = unicode.ToLower(strArry[0])
+	}
+	return string(strArry)
+}
+
 // convert first character ints to strings
 func stringifyFirstChar(str string) string {
 	first := str[:1]

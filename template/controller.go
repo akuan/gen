@@ -1,113 +1,110 @@
 package template
 
-var ControllerTmpl = `package api
+var ControllerTmpl = `package controller
 
 import (
-	"net/http"
-
-	"github.com/julienschmidt/httprouter"
-	"github.com/akuan/gen/dbmeta"
+	"fmt"
+ 
 	"{{.PackageName}}"
+	"github.com/gin-gonic/gin"
 )
 
-func config{{pluralize .StructName}}Router(router *httprouter.Router) {
-	router.GET("/{{pluralize .StructName | toLower}}", GetAll{{pluralize .StructName}})
-	router.POST("/{{pluralize .StructName | toLower}}", Add{{.StructName}})
-	router.GET("/{{pluralize .StructName | toLower}}/:id", Get{{.StructName}})
-	router.PUT("/{{pluralize .StructName | toLower}}/:id", Update{{.StructName}})
-	router.DELETE("/{{pluralize .StructName | toLower}}/:id", Delete{{.StructName}})
+func config{{pluralize .StructName}}Router(router *gin.RouterGroup) {
+	router.GET("/{{.StructName | toLower}}", GetAll{{pluralize .StructName}})
+	router.POST("/{{.StructName | toLower}}", Add{{.StructName}})
+	router.GET("/{{.StructName | toLower}}/:id", Get{{.StructName}})
+	router.PUT("/{{.StructName | toLower}}/:id", Update{{.StructName}})
+	router.DELETE("/{{.StructName | toLower}}/:id", Delete{{.StructName}})
 }
 
-func GetAll{{pluralize .StructName}}(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	page, err := readInt(r, "page", 1)
-	if err != nil || page < 1 {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+func GetAll{{pluralize .StructName}}(c *gin.Context) {
+	page := QueryInt(c, "page")
+	if page < 1 {
+		page = 1
 	}
-	pagesize, err := readInt(r, "pagesize", 20)
-	if err != nil || pagesize <= 0 {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	pagesize := QueryInt(c, "pagesize")
+	if pagesize <= 0 {
+		pagesize = 10
 	}
 	offset := (page - 1) * pagesize
-
-	order := r.FormValue("order")
-
-	{{pluralize .StructName | toLower}} := []*model.{{.StructName}}{}
-	
+	order := c.Query("order") 
+	{{pluralize .StructName | toLower}} := []*model.{{.StructName}}{}	
+	var err error
 	if order != "" {
-		err = DB.Model(&model.{{.StructName}}{}).Order(order).Offset(offset).Limit(pagesize).Find(&{{pluralize .StructName | toLower}}).Error
+		err = model.Db.Model(&model.{{.StructName}}{}).Order(order).Offset(offset).Limit(pagesize).Find(&{{pluralize .StructName | toLower}}).Error
 	} else {
-		err = DB.Model(&model.{{.StructName}}{}).Offset(offset).Limit(pagesize).Find(&{{pluralize .StructName | toLower}}).Error
+		err = model.Db.Model(&model.{{.StructName}}{}).Offset(offset).Limit(pagesize).Find(&{{pluralize .StructName | toLower}}).Error
 	}
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		ServerError(c, err.Error())
 		return
 	}
+	JsonData(c, {{pluralize .StructName | toLower}})
 }
 
-func Get{{.StructName}}(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := ps.ByName("id")
+func Get{{.StructName}}(c *gin.Context) {
+	id := ParamInt(c, "id")
 	{{.StructName | toLower}} := &model.{{.StructName}}{}
-	if DB.First({{.StructName | toLower}}, id).Error != nil {
-		http.NotFound(w, r)
+	if model.Db.First({{.StructName | toLower}}, id).Error != nil {
+		NotFound(c, fmt.Sprintf("{{.StructName}} with id %v Not found ", id))
 		return
 	}
-	writeJSON(w, {{.StructName | toLower}})
+	JsonData(c, {{.StructName | toLower}}) 
 }
 
-func Add{{.StructName}}(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func Add{{.StructName}}(c *gin.Context) {
 	{{.StructName | toLower}} := &model.{{.StructName}}{}
-
-	if err := readJSON(r, {{.StructName | toLower}}); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+   if err := c.ShouldBindJSON({{.StructName | toLower}}); err != nil {
+		ServerError(c, err.Error())
 		return
 	}
-	if err := DB.Save({{.StructName | toLower}}).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := model.Db.Save({{.StructName | toLower}}).Error; err != nil {
+		ServerError(c, err.Error())
 		return
 	}
-	writeJSON(w, {{.StructName | toLower}})
+	JsonData(c, {{.StructName | toLower}}) 
 }
 
-func Update{{.StructName}}(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := ps.ByName("id")
-
+func Update{{.StructName}}(c *gin.Context) {	 
+    id := ParamInt(c, "id")
+		
 	{{.StructName | toLower}} := &model.{{.StructName}}{}
-	if DB.First({{.StructName | toLower}}, id).Error != nil {
-		http.NotFound(w, r)
+	if model.Db.First({{.StructName | toLower}}, id).Error != nil {
+		NotFound(c, fmt.Sprintf(" update Error {{.StructName | toLower}} with id %v not Found", id))
 		return
 	}
 
 	updated := &model.{{.StructName}}{}
-	if err := readJSON(r, updated); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := c.ShouldBindJSON(updated); err != nil {
+		ServerError(c, err.Error())
 		return
 	}
 
-	if err := dbmeta.Copy({{.StructName | toLower}}, updated); err != nil{
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := model.Copy({{.StructName | toLower}}, updated); err != nil{
+		ServerError(c, err.Error())
 		return
 	}
 
-	if err := DB.Save({{.StructName | toLower}}).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := model.Db.Save({{.StructName | toLower}}).Error; err != nil {
+		ServerError(c, err.Error())
 		return
 	}
-	writeJSON(w, {{.StructName | toLower}})
+	JsonData(c, {{.StructName | toLower}})
 }
 
-func Delete{{.StructName}}(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id := ps.ByName("id")
+func Delete{{.StructName}}(c *gin.Context) {
+	id := ParamInt(c, "id")
 	{{.StructName | toLower}} := &model.{{.StructName}}{}
 
-	if DB.First({{.StructName | toLower}}, id).Error != nil {
-		http.NotFound(w, r)
+	if model.Db.First({{.StructName | toLower}}, id).Error != nil {
+		NotFound(c, fmt.Sprintf(" delete Error {{.StructName | toLower}} with id %v not Found", id))
 		return
 	}
-	if err := DB.Delete({{.StructName | toLower}}).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := model.Db.Delete({{.StructName | toLower}}).Error; err != nil {
+		ServerError(c, err.Error())
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	JsonData(c, "")
 }
 `

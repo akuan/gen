@@ -131,7 +131,8 @@ func generateFieldsTypes(db *sql.DB, columns []*sql.ColumnType, depth int, jsonA
 
 		}
 		if jsonAnnotation == true {
-			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", key))
+			jsAnn := strFirstToLower(fieldName)
+			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", jsAnn))
 		}
 		if len(annotations) > 0 {
 			field = fmt.Sprintf("%s %s `%s`",

@@ -1,55 +1,65 @@
 package template
 
-var RouterTmpl = `package api
+var RouterTmpl = `package controller
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"labgo/modules/log"
 	"net/http"
 	"strconv"
 
-	"github.com/jinzhu/gorm"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-gonic/gin"
 )
+ 
 
-// example for init the database:
-//
-//  DB, err := gorm.Open("mysql", "root@tcp(127.0.0.1:3306)/employees?charset=utf8&parseTime=true")
-//  if err != nil {
-//  	panic("failed to connect database: " + err.Error())
-//  }
-//  defer db.Close()
-
-var DB *gorm.DB
-
-func ConfigRouter() http.Handler {
-	router := httprouter.New()
+func ConfigRouter( router *gin.RouterGroup)   {	 
     {{range .}}config{{pluralize .}}Router(router)
-    {{end}}
-	
-	return router
+    {{end}} 
 }
-
-func readInt(r *http.Request, param string, v int64) (int64, error) {
-	p := r.FormValue(param)
-	if p == "" {
-		return v, nil
-	}
-	return strconv.ParseInt(p, 10, 64)
-}
-
-func writeJSON(w http.ResponseWriter, v interface{}) {
-	data, _ := json.Marshal(v)
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Write(data)
-}
-
-func readJSON(r *http.Request, v interface{}) error {
-	buf, err := ioutil.ReadAll(r.Body)
+ 
+//从查询字符串中获取Int值。
+func QueryInt(c *gin.Context, key string) int {
+	si := c.Query(key)
+	i, err := strconv.Atoi(si)
 	if err != nil {
-		return err
+		log.Error(fmt.Sprintf("Parse Query int error,key=%v ", key))
+		log.Error(err)
 	}
-	return json.Unmarshal(buf, v)
+	return i
+}
+
+func ParamInt(c *gin.Context, key string) int {
+	si := c.Param(key)
+	i, err := strconv.Atoi(si)
+	if err != nil {
+		log.Error(fmt.Sprintf("Parse Param int error,key=%v ", key))
+		log.Error(err)
+	}
+	return i
+}
+func BadRequest(c *gin.Context, msg string) {
+	JsonError(c, http.StatusBadRequest, msg)
+}
+func NotFound(c *gin.Context, msg string) {
+	JsonError(c, http.StatusNotFound, msg)
+}
+func ServerError(c *gin.Context, msg string) {
+	JsonError(c, http.StatusInternalServerError, msg)
+}
+
+func JsonError(c *gin.Context, code int, msg string) {
+	c.JSON(code, gin.H{
+		"code":    code,
+		"msg":     msg,
+		"success": false,
+	})
+}
+func JsonData(c *gin.Context, data interface{}) {
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"msg":     "ok",
+		"success": true,
+		"data":    data,
+	})
 }
 `
