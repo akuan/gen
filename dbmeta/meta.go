@@ -14,6 +14,7 @@ type ModelInfo struct {
 	ShortStructName string
 	TableName       string
 	Fields          []string
+	HasTimeFiled    bool
 }
 
 // commonInitialisms is a set of common initialisms.
@@ -89,7 +90,7 @@ const (
 // GenerateStruct generates a struct for the given table.
 func GenerateStruct(db *sql.DB, tableName string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) *ModelInfo {
 	cols, _ := schema.Table(db, tableName)
-	fields := generateFieldsTypes(db, cols, 0, jsonAnnotation, gormAnnotation, gureguTypes)
+	fields, hasTime := generateFieldsTypes(db, cols, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 
 	//fields := generateMysqlTypes(db, columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 
@@ -99,18 +100,21 @@ func GenerateStruct(db *sql.DB, tableName string, structName string, pkgName str
 		TableName:       tableName,
 		ShortStructName: strings.ToLower(string(structName[0])),
 		Fields:          fields,
+		HasTimeFiled:    hasTime,
 	}
 
 	return modelInfo
 }
 
 // Generate fields string
-func generateFieldsTypes(db *sql.DB, columns []*sql.ColumnType, depth int, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) []string {
+func generateFieldsTypes(db *sql.DB, columns []*sql.ColumnType, depth int, jsonAnnotation bool,
+	gormAnnotation bool, gureguTypes bool) ([]string, bool) {
 
 	//sort.Strings(keys)
 
 	var fields []string
 	var field = ""
+	var hasTime = false
 	for i, c := range columns {
 		nullable, _ := c.Nullable()
 		key := c.Name()
@@ -118,6 +122,9 @@ func generateFieldsTypes(db *sql.DB, columns []*sql.ColumnType, depth int, jsonA
 		if valueType == "" { // unknown type
 			fmt.Printf(" unknown type %s \n", c.DatabaseTypeName())
 			continue
+		}
+		if valueType == golangTime {
+			hasTime = true
 		}
 		fieldName := FmtFieldName(stringifyFirstChar(key))
 
@@ -148,7 +155,7 @@ func generateFieldsTypes(db *sql.DB, columns []*sql.ColumnType, depth int, jsonA
 
 		fields = append(fields, field)
 	}
-	return fields
+	return fields, hasTime
 }
 
 func sqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {

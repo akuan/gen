@@ -91,7 +91,7 @@ func main() {
 	}
 	os.Mkdir("model", 0777)
 
-	apiName := "api"
+	apiName := "controller"
 	if *rest {
 		os.Mkdir(apiName, 0777)
 	}

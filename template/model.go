@@ -2,10 +2,11 @@ package template
 
 var ModelTmpl = `package {{.PackageName}}
 
+{{if  .HasTimeFiled}}
 import (     
-    "time" 
+     "time" 
 )
- 
+{{end}}
 
 
 type {{.StructName}} struct {
