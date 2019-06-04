@@ -17,6 +17,17 @@ func config{{pluralize .StructName}}Router(router *gin.RouterGroup) {
 	router.DELETE("/{{.StructName | toLower}}/:id", Delete{{.StructName}})
 }
 
+
+// @Summary 获取所有的{{pluralize .StructName}}
+// @Tags {{.StructName}}
+// @Accept  json
+// @Produce  json
+// @Param page query string false "第几页，>=1"
+// @Param pagesize  query string false  "分页大小,默认10"
+// @Param order query string false "排序列和排序方式，空格分隔,列: id desc"
+// @Success 200 {object} model.JsonResult "{"code":0,"data":[model.{{.StructName}}],"msg":"ok","success":true}"
+// @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
+// @Router /api/{{.StructName | toLower}}  [GET]
 func GetAll{{pluralize .StructName}}(c *gin.Context) {
 	page := QueryInt(c, "page")
 	if page < 1 {
@@ -43,6 +54,15 @@ func GetAll{{pluralize .StructName}}(c *gin.Context) {
 	JsonData(c, {{pluralize .StructName | toLower}})
 }
 
+
+// @Summary 根据ID获取单个{{.StructName}}
+// @Tags {{.StructName}}
+// @Accept  json
+// @Produce  json
+// @Param id path int true "ID"
+// @Success 200 {object} model.JsonResult "{"code":0,"data":model.{{.StructName}},"msg":"ok","success":true}"
+// @Success 404 {object} model.JsonResult "{"code":404,"data":{},"msg":"{{.StructName}} with id 1 Not found","success":false}"
+// @Router /api/{{.StructName | toLower}}/{id}  [GET]
 func Get{{.StructName}}(c *gin.Context) {
 	id := ParamInt(c, "id")
 	{{.StructName | toLower}} := &model.{{.StructName}}{}
@@ -53,6 +73,14 @@ func Get{{.StructName}}(c *gin.Context) {
 	JsonData(c, {{.StructName | toLower}}) 
 }
 
+// @Summary 新增{{.StructName}}
+// @Tags {{.StructName}}
+// @Accept  json
+// @Produce  json
+// @Param {{.StructName}} body model.{{.StructName}} true "新增{{.StructName}}"
+// @Success 200 {object} model.JsonResult "{"code":0,"data":model.{{.StructName}},"msg":"ok","success":true}"
+// @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
+// @Router /api/{{.StructName | toLower}}   [POST]
 func Add{{.StructName}}(c *gin.Context) {
 	{{.StructName | toLower}} := &model.{{.StructName}}{}
    if err := c.ShouldBindJSON({{.StructName | toLower}}); err != nil {
@@ -66,6 +94,17 @@ func Add{{.StructName}}(c *gin.Context) {
 	JsonData(c, {{.StructName | toLower}}) 
 }
 
+
+// @Summary 更新{{.StructName}}
+// @Tags {{.StructName}}
+// @Accept  json
+// @Produce  json
+// @Param id path int true "ID"
+// @Param {{.StructName}} body model.{{.StructName}} true "待更新的{{.StructName}}"
+// @Success 200 {object} model.JsonResult "{"code":0,"data":model.{{.StructName}},"msg":"ok","success":true}"
+// @Success 404 {object} model.JsonResult "{"code":404,"data":{},"msg":"{{.StructName}} with id 1 Not found","success":false}"
+// @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
+// @Router /api/{{.StructName | toLower}}/{id}  [PUT]
 func Update{{.StructName}}(c *gin.Context) {	 
     id := ParamInt(c, "id")
 		
@@ -93,6 +132,16 @@ func Update{{.StructName}}(c *gin.Context) {
 	JsonData(c, {{.StructName | toLower}})
 }
 
+
+// @Summary 删除{{.StructName}}
+// @Tags {{.StructName}}
+// @Accept  json
+// @Produce  json
+// @Param id path int true "ID"
+// @Success 200 {object} model.JsonResult "{"code":0,"data":{},"msg":"ok","success":true}"
+// @Success 404 {object} model.JsonResult "{"code":404,"data":{},"msg":"{{.StructName}} with id 1 Not found","success":false}"
+// @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
+// @Router /api/{{.StructName | toLower}}/{id}  [DELETE]
 func Delete{{.StructName}}(c *gin.Context) {
 	id := ParamInt(c, "id")
 	{{.StructName | toLower}} := &model.{{.StructName}}{}

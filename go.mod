@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/denisenkom/go-mssqldb v0.0.0-20190412130859-3b1d194e553a
 	github.com/droundy/goopt v0.0.0-20170604162106-0b8effe182da
+	github.com/gin-gonic/gin v1.4.0
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/guregu/null v3.4.0+incompatible
 	github.com/jimsmart/schema v0.0.0-20181113191328-8d0563922e25
