@@ -109,6 +109,14 @@ func main() {
 	}
 
 	var structNames []string
+	var allStruct = make(map[string]string)
+	for _, tableName := range tables {
+		fmt.Printf("tableName %v \n", tableName)
+		structName := dbmeta.FmtFieldName(tableName)
+		structName = inflection.Singular(structName)
+		//	structNames = append(structNames, structName)
+		allStruct[structName] = tableName
+	}
 
 	// generate go files for each table
 	for _, tableName := range tables {
@@ -117,7 +125,7 @@ func main() {
 		structName = inflection.Singular(structName)
 		structNames = append(structNames, structName)
 
-		modelInfo := dbmeta.GenerateStruct(db, tableName, structName, "model", *jsonAnnotation, *gormAnnotation, *gureguTypes)
+		modelInfo := dbmeta.GenerateStruct(db, allStruct, tableName, structName, "model", *jsonAnnotation, *gormAnnotation, *gureguTypes)
 
 		var buf bytes.Buffer
 		err = t.Execute(&buf, modelInfo)

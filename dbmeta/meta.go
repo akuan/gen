@@ -85,12 +85,15 @@ const (
 	gureguNullTime   = "null.Time"
 	golangTime       = "time.Time"
 	golangDecimal    = "decimal.Decimal"
+	custDateTime     = "DateTime"
+	custDate         = "Date"
+	custTime         = "STime"
 )
 
 // GenerateStruct generates a struct for the given table.
-func GenerateStruct(db *sql.DB, tableName string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) *ModelInfo {
+func GenerateStruct(db *sql.DB, allStruct map[string]string, tableName string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) *ModelInfo {
 	cols, _ := schema.Table(db, tableName)
-	fields, hasTime := generateFieldsTypes(db, cols, 0, jsonAnnotation, gormAnnotation, gureguTypes)
+	fields, hasTime := generateFieldsTypes(db, allStruct, cols, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 
 	//fields := generateMysqlTypes(db, columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 
@@ -107,7 +110,7 @@ func GenerateStruct(db *sql.DB, tableName string, structName string, pkgName str
 }
 
 // Generate fields string
-func generateFieldsTypes(db *sql.DB, columns []*sql.ColumnType, depth int, jsonAnnotation bool,
+func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql.ColumnType, depth int, jsonAnnotation bool,
 	gormAnnotation bool, gureguTypes bool) ([]string, bool) {
 
 	//sort.Strings(keys)
@@ -140,6 +143,9 @@ func generateFieldsTypes(db *sql.DB, columns []*sql.ColumnType, depth int, jsonA
 		if jsonAnnotation == true {
 			jsAnn := strFirstToLower(fieldName)
 			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", jsAnn))
+			if strings.HasPrefix(valueType, "Date") || strings.HasSuffix(valueType, "Time") {
+				annotations = append(annotations, "swaggertype:\"primitive,string\"")
+			}
 		}
 		if len(annotations) > 0 {
 			field = fmt.Sprintf("%s %s `%s`",
@@ -152,10 +158,45 @@ func generateFieldsTypes(db *sql.DB, columns []*sql.ColumnType, depth int, jsonA
 				fieldName,
 				valueType)
 		}
-
 		fields = append(fields, field)
+		cn := c.Name()
+		cn = strings.ToLower(cn)
+		if strings.HasSuffix(cn, "_id") {
+			refFieldName := fieldName[:len(fieldName)-2]
+			strName := refFieldName
+			_, ok := allStruct[refFieldName]
+			if !ok {
+				strName = "DicValue"
+			}
+			refField := genReferFild(c.Name(), refFieldName, strName, jsonAnnotation, gormAnnotation)
+			fields = append(fields, refField)
+		}
 	}
 	return fields, hasTime
+}
+
+func genReferFild(reginalName, fName, sType string, jsonAnnotation bool, gormAnnotation bool) string {
+	var field = ""
+	var annotations []string
+	if gormAnnotation == true {
+		annotations = append(annotations, fmt.Sprintf("gorm:\"save_associations:fase;foreignkey:%s\"", reginalName))
+	}
+	if jsonAnnotation == true {
+		jsAnn := strFirstToLower(fName)
+		annotations = append(annotations, fmt.Sprintf("json:\"%s\"", jsAnn))
+	}
+	if len(annotations) > 0 {
+		field = fmt.Sprintf("%s %s `%s`",
+			fName,
+			sType,
+			strings.Join(annotations, " "))
+
+	} else {
+		field = fmt.Sprintf("%s %s",
+			fName,
+			sType)
+	}
+	return field
 }
 
 func sqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
@@ -186,11 +227,28 @@ func sqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 			return sqlNullString
 		}
 		return "string"
-	case "date", "datetime", "time", "timestamp":
+	//
+	// case "date", "datetime", "time", "timestamp":
+	// 	if nullable && gureguTypes {
+	// 		return gureguNullTime
+	// 	}
+	// 	return golangTime
+	//
+	case "datetime", "timestamp", "timestamp without time zone", "timestamp with time zone":
 		if nullable && gureguTypes {
 			return gureguNullTime
 		}
-		return golangTime
+		return custDateTime
+	case "date":
+		if nullable && gureguTypes {
+			return gureguNullTime
+		}
+		return custDate
+	case "time", "time without time zone", "time with time zone":
+		if nullable && gureguTypes {
+			return gureguNullTime
+		}
+		return custTime
 	case "decimal", "numeric", "double":
 		if nullable {
 			if gureguTypes {
