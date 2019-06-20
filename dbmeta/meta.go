@@ -159,9 +159,12 @@ func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql
 				valueType)
 		}
 		fields = append(fields, field)
+		//Add reference field
 		cn := c.Name()
 		cn = strings.ToLower(cn)
-		if strings.HasSuffix(cn, "_id") {
+		// golangInt        = "int"
+		// golangInt64      = "int64"
+		if strings.HasSuffix(cn, "_id") && (valueType == golangInt || valueType == golangInt64) {
 			refFieldName := fieldName[:len(fieldName)-2]
 			strName := refFieldName
 			_, ok := allStruct[refFieldName]
