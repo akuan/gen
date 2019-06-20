@@ -4,9 +4,10 @@ var ControllerTmpl = `package controller
 
 import (
 	"fmt"
- 
+
 	"{{.PackageName}}"
-	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin"	
+	"github.com/jinzhu/gorm"
 )
 
 func config{{pluralize .StructName}}Router(router *gin.RouterGroup) {
@@ -29,31 +30,50 @@ func config{{pluralize .StructName}}Router(router *gin.RouterGroup) {
 // @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
 // @Router /api/{{.StructName | toLower}}  [GET]
 func GetAll{{pluralize .StructName}}(c *gin.Context) {
-	page := QueryInt(c, "page")
-	if page < 1 {
-		page = 1
-	}
-	pagesize := QueryInt(c, "pagesize")
-	if pagesize <= 0 {
-		pagesize = 10
-	}
+	page, pagesize := parsePageParam(c)
 	offset := (page - 1) * pagesize
-	order := c.Query("order") 
-	{{pluralize .StructName | toLower}} := []*model.{{.StructName}}{}	
+	{{pluralize .StructName | toLower}} := []*model.{{.StructName}}{}
 	var err error
-	if order != "" {
-		err = model.Db.Model(&model.{{.StructName}}{}).Order(order).Offset(offset).Limit(pagesize).Find(&{{pluralize .StructName | toLower}}).Error
-	} else {
-		err = model.Db.Model(&model.{{.StructName}}{}).Offset(offset).Limit(pagesize).Find(&{{pluralize .StructName | toLower}}).Error
+	tx := model.Db.Model(&model.{{.StructName}}{})
+	tx = build{{.StructName}}Query(c, tx)
+	tc := tx
+	order := c.Query("order")
+	if order == "" {
+		order="id"
 	}
-
+	tx = tx.Order(order)
+ //tx = tx.Preload("Department").Preload("Type").Preload("Status").Preload("Major")
+	err = tx.Offset(offset).Limit(pagesize).Find(&{{pluralize .StructName | toLower}}).Error
 	if err != nil {
 		ServerError(c, err.Error())
 		return
 	}
-	JsonData(c, {{pluralize .StructName | toLower}})
+	var totalCount int
+	tc.Count(&totalCount)
+	tPage := totalPage(totalCount, pagesize)
+	var jsResult = model.JsonResult{
+		Code:       0,
+		Msg:        "ok",
+		Success:    true,
+		TotalCount: totalCount,
+		TotalPage:  tPage,
+		Data:       {{pluralize .StructName | toLower}},
+	}
+	JsonRes(c, jsResult)
 }
 
+//build{{.StructName}}Query 解析查询参数
+func build{{.StructName}}Query(c *gin.Context, tx *gorm.DB) *gorm.DB {
+	eCols := map[string]string{
+		//"gender":       "gender",
+	}
+	tx = BuildEqualQuery(c, tx, eCols)
+	likeCols := map[string]string{
+	//	"name":   "name",
+	}
+	tx = BuildLikeQuery(c, tx, likeCols)
+	return tx
+}
 
 // @Summary 根据ID获取单个{{.StructName}}
 // @Tags {{.StructName}}
@@ -70,7 +90,7 @@ func Get{{.StructName}}(c *gin.Context) {
 		NotFound(c, fmt.Sprintf("{{.StructName}} with id %v Not found ", id))
 		return
 	}
-	JsonData(c, {{.StructName | toLower}}) 
+	JsonData(c, {{.StructName | toLower}})
 }
 
 // @Summary 新增{{.StructName}}
@@ -91,7 +111,7 @@ func Add{{.StructName}}(c *gin.Context) {
 		ServerError(c, err.Error())
 		return
 	}
-	JsonData(c, {{.StructName | toLower}}) 
+	JsonData(c, {{.StructName | toLower}})
 }
 
 
@@ -105,9 +125,9 @@ func Add{{.StructName}}(c *gin.Context) {
 // @Success 404 {object} model.JsonResult "{"code":404,"data":{},"msg":"{{.StructName}} with id 1 Not found","success":false}"
 // @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
 // @Router /api/{{.StructName | toLower}}/{id}  [PUT]
-func Update{{.StructName}}(c *gin.Context) {	 
+func Update{{.StructName}}(c *gin.Context) {
     id := ParamInt(c, "id")
-		
+
 	{{.StructName | toLower}} := &model.{{.StructName}}{}
 	if model.Db.First({{.StructName | toLower}}, id).Error != nil {
 		NotFound(c, fmt.Sprintf(" update Error {{.StructName | toLower}} with id %v not Found", id))

@@ -10,13 +10,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
- 
 
-func ConfigRouter( router *gin.RouterGroup)   {	 
+
+func ConfigRouter( router *gin.RouterGroup)   {
     {{range .}}config{{pluralize .}}Router(router)
-    {{end}} 
+    {{end}}
 }
- 
+
 //从查询字符串中获取Int值。
 func QueryInt(c *gin.Context, key string) int {
 	si := c.Query(key)
@@ -61,5 +61,26 @@ func JsonData(c *gin.Context, data interface{}) {
 		"success": true,
 		"data":    data,
 	})
+}
+
+//totalPage 计算总页数
+func totalPage(count, pageSize int) int {
+	if pageSize == 0 {
+		return 1
+	}
+	return int(math.Ceil(float64(count) / float64(pageSize)))
+}
+
+//parsePageParam 解析page参数
+func parsePageParam(c *gin.Context) (page int, pagesize int) {
+	page = QueryInt(c, "page")
+	if page < 1 {
+		page = 1
+	}
+	pagesize = QueryInt(c, "pagesize")
+	if pagesize <= 0 {
+		pagesize = 10
+	}
+	return page, pagesize
 }
 `
