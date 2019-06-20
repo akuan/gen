@@ -179,7 +179,7 @@ func genReferFild(reginalName, fName, sType string, jsonAnnotation bool, gormAnn
 	var field = ""
 	var annotations []string
 	if gormAnnotation == true {
-		annotations = append(annotations, fmt.Sprintf("gorm:\"save_associations:fase;foreignkey:%s\"", reginalName))
+		annotations = append(annotations, fmt.Sprintf("gorm:\"save_associations:false;foreignkey:%s\"", reginalName))
 	}
 	if jsonAnnotation == true {
 		jsAnn := strFirstToLower(fName)
