@@ -97,7 +97,8 @@ const (
 )
 
 // GenerateStruct generates a struct for the given table.
-func GenerateStruct(db *sql.DB, allStruct map[string]string, tableName string, structName string, pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) *ModelInfo {
+func GenerateStruct(db *sql.DB, allStruct map[string]string, tableName string, structName string,
+	pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) *ModelInfo {
 	cols, _ := schema.Table(db, tableName)
 	fields, hasTime := generateFieldsTypes(db, allStruct, cols, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 

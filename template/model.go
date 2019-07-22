@@ -3,8 +3,8 @@ package template
 var ModelTmpl = `package {{.PackageName}}
 
 {{if  .HasTimeFiled}}
-import (     
-     "time" 
+import (
+     "time"
 )
 {{end}}
 
