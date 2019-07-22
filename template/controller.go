@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"{{.PackageName}}"
-	"github.com/gin-gonic/gin"	
+	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
 
@@ -26,6 +26,10 @@ func config{{pluralize .StructName}}Router(router *gin.RouterGroup) {
 // @Param page query string false "第几页，>=1"
 // @Param pagesize  query string false  "分页大小,默认10"
 // @Param order query string false "排序列和排序方式，空格分隔,列: id desc"
+{{range .EqualQueryCols}}// @Param {{.Stype}} query string false "{{.Stype}}"{{end}}
+{{range .BetweenQueryCols}}// @Param {{.Stype}}Start query string false "{{.Stype}}Start"
+// @Param {{.Stype}}End query string false "{{.Stype}}End"{{end}}
+{{range .LikeQueryCols}}// @Param {{.Stype}} query string false "{{.Stype}}"{{end}}
 // @Success 200 {object} model.JsonResult "{"code":0,"data":[model.{{.StructName}}],"msg":"ok","success":true}"
 // @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
 // @Router /api/{{.StructName | toLower}}  [GET]
@@ -65,13 +69,17 @@ func GetAll{{pluralize .StructName}}(c *gin.Context) {
 //build{{.StructName}}Query 解析查询参数
 func build{{.StructName}}Query(c *gin.Context, tx *gorm.DB) *gorm.DB {
 	eCols := map[string]string{
-		//"gender":       "gender",
+		{{range .EqualQueryCols}}"{{.Stype}}":       "{{.Col}}",{{end}}
 	}
 	tx = BuildEqualQuery(c, tx, eCols)
 	likeCols := map[string]string{
-	//	"name":   "name",
+		{{range .LikeQueryCols}}"{{.Stype}}":       "{{.Col}}",{{end}}
 	}
 	tx = BuildLikeQuery(c, tx, likeCols)
+	betweenCols := map[string]string{
+		{{range .BetweenQueryCols}} "{{.Stype}}":       "{{.Col}}",	{{end}}
+	}
+	tx = BuildBetweenQuery(c, tx, betweenCols)
 	return tx
 }
 

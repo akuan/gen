@@ -47,7 +47,7 @@ func init() {
 	goopt.Description = func() string {
 		return "ORM and RESTful API generator for Mysql"
 	}
-	goopt.Version = "0.1"
+	goopt.Version = "0.2"
 	goopt.Summary = `gen [-v] --connstr "user:password@/dbname" --package pkgName --database databaseName --table tableName [--json] [--gorm] [--guregu]`
 
 	//Parse options
@@ -141,11 +141,26 @@ func main() {
 		ioutil.WriteFile(filepath.Join("model", inflection.Singular(tableName)+".go"), data, 0777)
 
 		if *rest {
+			//add query fields
+			v, _ := EqualQueryColums(*sqlType, *sqlConnStr, tableName)
+			q, _ := BetweenQueryColums(*sqlType, *sqlConnStr, tableName)
+			l, e := LikeQueryColums(*sqlType, *sqlConnStr, tableName)
+			fmt.Printf("\n len(EqualQueryCols)=%d,len(BetweenQueryCols)=%d,len(LikeQueryCols)=%d",
+				len(v), len(q), len(l))
+			if e != nil {
+				fmt.Println("\nError in EqualQueryColums : " + e.Error())
+			}
 			//write api
 			buf.Reset()
-			err = ct.Execute(&buf, map[string]string{"PackageName": *packageName + "/model", "StructName": structName})
+			err = ct.Execute(&buf, map[string]interface{}{
+				"PackageName":      *packageName + "/model",
+				"StructName":       structName,
+				"EqualQueryCols":   v,
+				"BetweenQueryCols": q,
+				"LikeQueryCols":    l,
+			})
 			if err != nil {
-				fmt.Println("Error in rendering controller: " + err.Error())
+				fmt.Println("\nError in rendering controller: " + err.Error())
 				return
 			}
 			data, err = format.Source(buf.Bytes())

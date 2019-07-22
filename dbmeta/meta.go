@@ -17,6 +17,12 @@ type ModelInfo struct {
 	HasTimeFiled    bool
 }
 
+//QueryCol
+type QueryCol struct {
+	Stype string //Field name in struct
+	Col   string //column  name in database
+}
+
 // commonInitialisms is a set of common initialisms.
 // Only add entries that are highly unlikely to be non-initialisms.
 // For instance, "ID" is fine (Freudian code is rare), but "AND" is not.
@@ -129,7 +135,7 @@ func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql
 		if valueType == golangTime {
 			hasTime = true
 		}
-		fieldName := FmtFieldName(stringifyFirstChar(key))
+		fieldName := FmtFieldName(StringifyFirstChar(key))
 
 		var annotations []string
 		if gormAnnotation == true {
@@ -141,7 +147,7 @@ func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql
 
 		}
 		if jsonAnnotation == true {
-			jsAnn := strFirstToLower(fieldName)
+			jsAnn := StrFirstToLower(fieldName)
 			annotations = append(annotations, fmt.Sprintf("json:\"%s\"", jsAnn))
 			if strings.HasPrefix(valueType, "Date") || strings.HasSuffix(valueType, "Time") {
 				annotations = append(annotations, "swaggertype:\"primitive,string\"")
@@ -185,7 +191,7 @@ func genReferFild(reginalName, fName, sType string, jsonAnnotation bool, gormAnn
 		annotations = append(annotations, fmt.Sprintf("gorm:\"save_associations:false;foreignkey:%s\"", reginalName))
 	}
 	if jsonAnnotation == true {
-		jsAnn := strFirstToLower(fName)
+		jsAnn := StrFirstToLower(fName)
 		annotations = append(annotations, fmt.Sprintf("json:\"%s\"", jsAnn))
 	}
 	if len(annotations) > 0 {
@@ -230,14 +236,14 @@ func sqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 			return sqlNullString
 		}
 		return "string"
-	//
-	// case "date", "datetime", "time", "timestamp":
-	// 	if nullable && gureguTypes {
-	// 		return gureguNullTime
-	// 	}
-	// 	return golangTime
-	//
-	case "datetime", "timestamp", "timestamp without time zone", "timestamp with time zone":
+		//
+		// case "date", "datetime", "time", "timestamp":
+		// 	if nullable && gureguTypes {
+		// 		return gureguNullTime
+		// 	}
+		// 	return golangTime
+		//
+	case "datetime", "timestamp", "timestamp without time zone", "timestamp with time zone", "timestamptz":
 		if nullable && gureguTypes {
 			return gureguNullTime
 		}

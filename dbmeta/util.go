@@ -115,7 +115,7 @@ func strFirstToUpper(str string) string {
 	return string(strArry)
 }
 
-func strFirstToLower(str string) string {
+func StrFirstToLower(str string) string {
 	if len(str) < 1 {
 		return ""
 	}
@@ -130,7 +130,7 @@ func strFirstToLower(str string) string {
 }
 
 // convert first character ints to strings
-func stringifyFirstChar(str string) string {
+func StringifyFirstChar(str string) string {
 	first := str[:1]
 
 	i, err := strconv.ParseInt(first, 10, 8)

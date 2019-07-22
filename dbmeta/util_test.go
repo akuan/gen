@@ -51,11 +51,11 @@ func Test_Copy(t *testing.T) {
 func TestStrFirstToLower(t *testing.T) {
 	str := "Card"
 	tar := "card"
-	res := strFirstToLower(str)
+	res := StrFirstToLower(str)
 	fmt.Printf("%v strFirstToLower is %v \n", str, res)
 	str = "ID"
 	tar = "ID"
-	res = strFirstToLower(str)
+	res = StrFirstToLower(str)
 	fmt.Printf("%v strFirstToLower is %v \n", str, res)
 	if res != tar {
 		t.Error("Not equal")

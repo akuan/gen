@@ -1,4 +1,4 @@
-### gen 
+### gen
 
 [![License](https://img.shields.io/:license-apache-3.0-blue.svg)](https://opensource.org/licenses/Apache-3.0) [![GoDoc](https://godoc.org/github.com/smallnest/gen?status.png)](http://godoc.org/github.com/smallnest/gen)  [![travis](https://travis-ci.org/smallnest/gen.svg?branch=master)](https://travis-ci.org/smallnest/gen) [![Go Report Card](https://goreportcard.com/badge/github.com/smallnest/gen)](https://goreportcard.com/report/github.com/smallnest/gen)
 
@@ -78,7 +78,8 @@ Currently only a limited number of datatypes are supported. Initial support incl
 
 ## TODO
 
-- PostgresSQL integer type not map
-- Json low case
-- gin  routes
-
+- ~~ PostgresSQL integer type not map ~~
+- ~~ Json low case ~~
+- ~~ gin  routes ~~
+- Auto generate query
+- use "github.com/shopspring/decimal" for decimal type
