@@ -261,7 +261,7 @@ func sqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 			return gureguNullTime
 		}
 		return custDate
-	case "time", "time without time zone", "time with time zone":
+	case "time", "time without time zone", "time with time zone", "timetz":
 		if nullable && gureguTypes {
 			return gureguNullTime
 		}
