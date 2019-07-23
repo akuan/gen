@@ -2,11 +2,10 @@ package template
 
 var ModelTmpl = `package {{.PackageName}}
 
-{{if  .HasTimeFiled}}
-import (
-     "time"
-)
+{{if  .HasDecimal}}
+import "github.com/shopspring/decimal"
 {{end}}
+
 
 
 type {{.StructName}} struct {

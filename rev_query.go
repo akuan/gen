@@ -10,13 +10,13 @@ import (
 
 //GenQuery gorm map to gen_query table,for config query tables and columns
 type GenQuery struct {
-	ID              int    `gorm:"column:id;primary_key" json:"ID"`
-	Table           string `gorm:"column:table_name" json:"table"`
-	Column          string `gorm:"column:column_name" json:"column"`
+	ID              int    `gorm:"column:id;type:serial;primary_key" json:"ID"`
+	Table           string `gorm:"column:table_name;type:VARCHAR" json:"tableName"`
+	Column          string `gorm:"column:column_name;type:VARCHAR" json:"columnName"`
+	HasEqualQuery   bool   `gorm:"column:has_equal_query;type:BOOL" json:"hasEqualQuery"`
+	HasBetweenQuery bool   `gorm:"column:has_between_query;type:BOOL" json:"hasBetweenQuery"`
+	HasLikeQuery    bool   `gorm:"column:has_like_query;type:BOOL" json:"hasLikeQuery"`
 	Key             string `gorm:"-" json:"Key"`
-	HasEqualQuery   bool   `gorm:"column:has_equal_query" json:"hasEqualQuery"`
-	HasBetweenQuery bool   `gorm:"column:has_between_query" json:"hasBetweenQuery"`
-	HasLikeQuery    bool   `gorm:"column:has_like_query" json:"hasLikeQuery"`
 }
 
 // TableName sets the insert table name for this struct type
@@ -39,6 +39,7 @@ type QueryCol struct {
 func FindQueryColums(sqltype, constr string) (map[string]GenQuery, error) {
 	var q = make(map[string]GenQuery)
 	Db, err := gorm.Open(sqltype, constr)
+	Db.AutoMigrate(&GenQuery{})
 	if err != nil {
 		fmt.Printf("\nOpen DataBase  Error %v ,dbtype=%v,%v", err, sqltype, constr)
 		if Db != nil {
@@ -68,6 +69,7 @@ func EqualQueryColums(sqltype, constr, table string) ([]QueryCol, error) {
 		panic(err)
 	}
 	defer Db.Close()
+	Db.AutoMigrate(&GenQuery{})
 	var gq []*GenQuery
 	err = Db.Where("table_name = ?", table).Where("has_equal_query=?", true).Find(&gq).Error
 	if err != nil {
@@ -88,6 +90,7 @@ func BetweenQueryColums(sqltype, constr, table string) ([]QueryCol, error) {
 		panic(err)
 	}
 	defer Db.Close()
+	Db.AutoMigrate(&GenQuery{})
 	var gq []*GenQuery
 	err = Db.Where("table_name = ?", table).
 		Where("has_between_query=?", true).Find(&gq).Error
@@ -109,6 +112,7 @@ func LikeQueryColums(sqltype, constr, table string) ([]QueryCol, error) {
 		panic(err)
 	}
 	defer Db.Close()
+	Db.AutoMigrate(&GenQuery{})
 	var gq []*GenQuery
 	err = Db.Where("table_name = ?", table).Where("has_like_query=?", true).Find(&gq).Error
 	if err != nil {

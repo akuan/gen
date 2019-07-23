@@ -14,7 +14,7 @@ type ModelInfo struct {
 	ShortStructName string
 	TableName       string
 	Fields          []string
-	HasTimeFiled    bool
+	HasDecimal      bool
 }
 
 // commonInitialisms is a set of common initialisms.
@@ -88,13 +88,14 @@ const (
 	custDateTime     = "DateTime"
 	custDate         = "Date"
 	custTime         = "STime"
+	custInterval     = "Span"
 )
 
 // GenerateStruct generates a struct for the given table.
 func GenerateStruct(db *sql.DB, allStruct map[string]string, tableName string, structName string,
 	pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) *ModelInfo {
 	cols, _ := schema.Table(db, tableName)
-	fields, hasTime := generateFieldsTypes(db, allStruct, cols, 0, jsonAnnotation, gormAnnotation, gureguTypes)
+	fields, hasDec := generateFieldsTypes(db, allStruct, cols, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 
 	//fields := generateMysqlTypes(db, columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 	var modelInfo = &ModelInfo{
@@ -103,7 +104,7 @@ func GenerateStruct(db *sql.DB, allStruct map[string]string, tableName string, s
 		TableName:       tableName,
 		ShortStructName: strings.ToLower(string(structName[0])),
 		Fields:          fields,
-		HasTimeFiled:    hasTime,
+		HasDecimal:      hasDec,
 	}
 	return modelInfo
 }
@@ -116,7 +117,7 @@ func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql
 
 	var fields []string
 	var field = ""
-	var hasTime = false
+	var hasDec = false
 	for i, c := range columns {
 		nullable, _ := c.Nullable()
 		key := c.Name()
@@ -131,13 +132,17 @@ func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql
 				srcColType = fmt.Sprintf("%s(%d,%d)", c.DatabaseTypeName(), dc, p)
 			}
 		}
-		valueType := sqlTypeToGoType(strings.ToLower(c.DatabaseTypeName()), nullable, gureguTypes)
+		if strings.ToLower(key) == "id" {
+			srcColType = "serial"
+		}
+		colName := strings.ToLower(c.DatabaseTypeName())
+		valueType := sqlTypeToGoType(colName, nullable, gureguTypes)
 		if valueType == "" { // unknown type
 			fmt.Printf("\n unknown type %s \n", c.DatabaseTypeName())
 			continue
 		}
-		if valueType == golangTime {
-			hasTime = true
+		if strings.HasPrefix(colName, "decimal") || strings.HasPrefix(colName, "numeric") {
+			hasDec = true
 		}
 		fieldName := FmtFieldName(StringifyFirstChar(key))
 
@@ -162,7 +167,6 @@ func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql
 				fieldName,
 				valueType,
 				strings.Join(annotations, " "))
-
 		} else {
 			field = fmt.Sprintf("%s %s",
 				fieldName,
@@ -185,7 +189,7 @@ func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql
 			fields = append(fields, refField)
 		}
 	}
-	return fields, hasTime
+	return fields, hasDec
 }
 
 func genReferFild(reginalName, fName, sType string, jsonAnnotation bool, gormAnnotation bool) string {
@@ -262,22 +266,24 @@ func sqlTypeToGoType(mysqlType string, nullable bool, gureguTypes bool) string {
 			return gureguNullTime
 		}
 		return custTime
-	case "decimal", "numeric", "double":
+	case "decimal", "numeric", "double", "float":
 		if nullable {
 			if gureguTypes {
 				return gureguNullFloat
 			}
 			return sqlNullFloat
 		}
-		return golangFloat64
-	case "float":
-		if nullable {
-			if gureguTypes {
-				return gureguNullFloat
-			}
-			return sqlNullFloat
-		}
-		return golangFloat32
+		return golangDecimal
+		// case "float":
+		// 	if nullable {
+		// 		if gureguTypes {
+		// 			return gureguNullFloat
+		// 		}
+		// 		return sqlNullFloat
+		// 	}
+		// 	return golangFloat32
+	case "interval":
+		return custInterval
 	case "binary", "blob", "longblob", "mediumblob", "varbinary", "bytea":
 		return golangByteArray
 	}
