@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"gen/dbmeta"
+	"strings"
 
 	//dec "github.com/shopspring/decimal"
 	"github.com/jinzhu/gorm"
@@ -71,7 +72,7 @@ func EqualQueryColums(sqltype, constr, table string) ([]QueryCol, error) {
 	defer Db.Close()
 	Db.AutoMigrate(&GenQuery{})
 	var gq []*GenQuery
-	err = Db.Where("table_name = ?", table).Where("has_equal_query=?", true).Find(&gq).Error
+	err = Db.Where("lower(table_name) = ?", strings.ToLower(table)).Where("has_equal_query=?", true).Find(&gq).Error
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +93,7 @@ func BetweenQueryColums(sqltype, constr, table string) ([]QueryCol, error) {
 	defer Db.Close()
 	Db.AutoMigrate(&GenQuery{})
 	var gq []*GenQuery
-	err = Db.Where("table_name = ?", table).
+	err = Db.Where("lower(table_name) = ?", strings.ToLower(table)).
 		Where("has_between_query=?", true).Find(&gq).Error
 	if err != nil {
 		return nil, err
@@ -114,7 +115,7 @@ func LikeQueryColums(sqltype, constr, table string) ([]QueryCol, error) {
 	defer Db.Close()
 	Db.AutoMigrate(&GenQuery{})
 	var gq []*GenQuery
-	err = Db.Where("table_name = ?", table).Where("has_like_query=?", true).Find(&gq).Error
+	err = Db.Where("lower(table_name) = ?", strings.ToLower(table)).Where("has_like_query=?", true).Find(&gq).Error
 	if err != nil {
 		return nil, err
 	}

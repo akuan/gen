@@ -1,11 +1,5 @@
 package model
 
-import (
-	"encoding/json"
-	"fmt"
-	//"labgo/modules/log"
-)
-
 type DicValue struct {
 	ID         int    `gorm:"column:id;primary_key" json:"ID"`
 	OptionType string `gorm:"column:option_type" json:"optionType"`
