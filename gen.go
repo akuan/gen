@@ -20,6 +20,7 @@ import (
 	"github.com/serenize/snaker"
 )
 
+//genDbMigrate generate gorm database auto Migrate
 func genDbMigrate(structNames []string) {
 	//generate db
 	tplDb, err := getTemplate(gtmpl.DbTmpl)
@@ -42,6 +43,7 @@ func genDbMigrate(structNames []string) {
 	//end generate db
 }
 
+//generate routers
 func genRouters(apiName string, structNames []string) {
 	tplRt, err := getTemplate(gtmpl.RouterTmpl)
 	if err != nil {
@@ -79,7 +81,6 @@ func genControllers(apiName, tableName, packageName, structName string) {
 		fmt.Println("\nError in EqualQueryColums : " + e.Error())
 	}
 	//write api
-	//buf.Reset()
 	var buf bytes.Buffer
 	err = tplCtl.Execute(&buf, map[string]interface{}{
 		"PackageName":      packageName + "/model",
@@ -100,6 +101,7 @@ func genControllers(apiName, tableName, packageName, structName string) {
 	ioutil.WriteFile(filepath.Join(apiName, inflection.Singular(tableName)+".go"), data, 0777)
 }
 
+//genModel generate model files
 func genModel(modelInfo *dbmeta.ModelInfo, tableName string) {
 	var buf bytes.Buffer
 	tplModel, err := getTemplate(gtmpl.ModelTmpl)
@@ -119,6 +121,8 @@ func genModel(modelInfo *dbmeta.ModelInfo, tableName string) {
 	}
 	ioutil.WriteFile(filepath.Join("model", inflection.Singular(tableName)+".go"), data, 0777)
 }
+
+//
 func getTemplate(t string) (*template.Template, error) {
 	var funcMap = template.FuncMap{
 		"pluralize":        inflection.Plural,

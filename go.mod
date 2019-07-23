@@ -17,4 +17,5 @@ require (
 	github.com/serenize/snaker v0.0.0-20171204205717-a683aaf2d516
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24
 	github.com/smallnest/gen v0.0.0-20190430023433-689e748a551d
+	golang.org/x/tools v0.0.0-20190723021737-8bb11ff117ca // indirect
 )

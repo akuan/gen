@@ -17,12 +17,6 @@ type ModelInfo struct {
 	HasTimeFiled    bool
 }
 
-//QueryCol
-type QueryCol struct {
-	Stype string //Field name in struct
-	Col   string //column  name in database
-}
-
 // commonInitialisms is a set of common initialisms.
 // Only add entries that are highly unlikely to be non-initialisms.
 // For instance, "ID" is fine (Freudian code is rare), but "AND" is not.
@@ -103,7 +97,6 @@ func GenerateStruct(db *sql.DB, allStruct map[string]string, tableName string, s
 	fields, hasTime := generateFieldsTypes(db, allStruct, cols, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 
 	//fields := generateMysqlTypes(db, columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes)
-
 	var modelInfo = &ModelInfo{
 		PackageName:     pkgName,
 		StructName:      structName,
@@ -112,7 +105,6 @@ func GenerateStruct(db *sql.DB, allStruct map[string]string, tableName string, s
 		Fields:          fields,
 		HasTimeFiled:    hasTime,
 	}
-
 	return modelInfo
 }
 
@@ -128,9 +120,20 @@ func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql
 	for i, c := range columns {
 		nullable, _ := c.Nullable()
 		key := c.Name()
+		srcColType := c.DatabaseTypeName()
+		fmt.Printf("\n the source data base type is %s", srcColType)
+		if "TEXT" != strings.ToUpper(srcColType) {
+			if length, ok := c.Length(); ok {
+				fmt.Printf("\n the length of column %s is  %v", c.DatabaseTypeName(), length)
+				srcColType = fmt.Sprintf("%s(%d)", c.DatabaseTypeName(), length)
+			}
+			if dc, p, ok := c.DecimalSize(); ok {
+				srcColType = fmt.Sprintf("%s(%d,%d)", c.DatabaseTypeName(), dc, p)
+			}
+		}
 		valueType := sqlTypeToGoType(strings.ToLower(c.DatabaseTypeName()), nullable, gureguTypes)
 		if valueType == "" { // unknown type
-			fmt.Printf(" unknown type %s \n", c.DatabaseTypeName())
+			fmt.Printf("\n unknown type %s \n", c.DatabaseTypeName())
 			continue
 		}
 		if valueType == golangTime {
@@ -141,11 +144,11 @@ func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql
 		var annotations []string
 		if gormAnnotation == true {
 			if i == 0 {
-				annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s;primary_key\"", key))
+				annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s;type:%s;primary_key\"", key, srcColType))
 			} else {
-				annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s\"", key))
+				annotations = append(annotations, fmt.Sprintf("gorm:\"column:%s;type:%s\"", key, srcColType))
 			}
-
+			//type:timestamp with time zone
 		}
 		if jsonAnnotation == true {
 			jsAnn := StrFirstToLower(fieldName)

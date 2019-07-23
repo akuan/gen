@@ -29,12 +29,18 @@ func (l *GenQuery) GetKey() string {
 	return fmt.Sprintf("%s::%s", l.Table, l.Column)
 }
 
+//QueryCol
+type QueryCol struct {
+	Stype string //Field name in struct
+	Col   string //column  name in database
+}
+
 //FindQueryColums use gorm to get all gen_query table data
 func FindQueryColums(sqltype, constr string) (map[string]GenQuery, error) {
 	var q = make(map[string]GenQuery)
 	Db, err := gorm.Open(sqltype, constr)
 	if err != nil {
-		fmt.Printf("Open DataBase  Error %v ,dbtype=%v,%v", err, sqltype, constr)
+		fmt.Printf("\nOpen DataBase  Error %v ,dbtype=%v,%v", err, sqltype, constr)
 		if Db != nil {
 			Db.Close()
 		}
@@ -52,10 +58,10 @@ func FindQueryColums(sqltype, constr string) (map[string]GenQuery, error) {
 }
 
 //EqualQueryColums  find equal Query columns for table "table"
-func EqualQueryColums(sqltype, constr, table string) ([]dbmeta.QueryCol, error) {
+func EqualQueryColums(sqltype, constr, table string) ([]QueryCol, error) {
 	Db, err := gorm.Open(sqltype, constr)
 	if err != nil {
-		fmt.Printf("Open DataBase  Error %v ,dbtype=%v,%v", err, sqltype, constr)
+		fmt.Printf("\nOpen DataBase  Error %v ,dbtype=%v,%v", err, sqltype, constr)
 		if Db != nil {
 			Db.Close()
 		}
@@ -67,15 +73,15 @@ func EqualQueryColums(sqltype, constr, table string) ([]dbmeta.QueryCol, error) 
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("EqualQueryColums I got for table %s len=%d is %v", table, len(gq), gq)
+	fmt.Printf("\nEqualQueryColums I got for table %s len=%d is %v", table, len(gq), gq)
 	return buildQueryCol(gq), nil
 }
 
 //BetweenQueryColums find between Query columns for table "table"
-func BetweenQueryColums(sqltype, constr, table string) ([]dbmeta.QueryCol, error) {
+func BetweenQueryColums(sqltype, constr, table string) ([]QueryCol, error) {
 	Db, err := gorm.Open(sqltype, constr)
 	if err != nil {
-		fmt.Printf("Open DataBase  Error %v ,dbtype=%v,%v", err, sqltype, constr)
+		fmt.Printf("\nOpen DataBase  Error %v ,dbtype=%v,%v", err, sqltype, constr)
 		if Db != nil {
 			Db.Close()
 		}
@@ -88,12 +94,12 @@ func BetweenQueryColums(sqltype, constr, table string) ([]dbmeta.QueryCol, error
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("BetweenQueryColums I got for table %s len=%d is %v", table, len(gq), gq)
+	fmt.Printf("\nBetweenQueryColums I got for table %s len=%d is %v", table, len(gq), gq)
 	return buildQueryCol(gq), nil
 }
 
 //EqualQueryColums  find like Query columns for table "table"
-func LikeQueryColums(sqltype, constr, table string) ([]dbmeta.QueryCol, error) {
+func LikeQueryColums(sqltype, constr, table string) ([]QueryCol, error) {
 	Db, err := gorm.Open(sqltype, constr)
 	if err != nil {
 		fmt.Printf("Open DataBase  Error %v ,dbtype=%v,%v", err, sqltype, constr)
@@ -108,18 +114,18 @@ func LikeQueryColums(sqltype, constr, table string) ([]dbmeta.QueryCol, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("LikeQueryColums I got for table %s len=%d is %v", table, len(gq), gq)
+	fmt.Printf("\nLikeQueryColums I got for table %s len=%d is %v", table, len(gq), gq)
 	return buildQueryCol(gq), nil
 }
 
-func buildQueryCol(gq []*GenQuery) []dbmeta.QueryCol {
-	var res []dbmeta.QueryCol
+func buildQueryCol(gq []*GenQuery) []QueryCol {
+	var res []QueryCol
 	for _, que := range gq {
 		sc := que.Column
 		if sc != "" {
 			fn := dbmeta.FmtFieldName(dbmeta.StringifyFirstChar(sc))
 			fn = dbmeta.StrFirstToLower(fn)
-			col := dbmeta.QueryCol{
+			col := QueryCol{
 				Stype: fn,
 				Col:   sc,
 			}

@@ -47,6 +47,10 @@ func init() {
 
 }
 
+const (
+	gen_query = "gen_query"
+)
+
 func main() {
 	// Username is required
 	if sqlConnStr == nil || *sqlConnStr == "" {
@@ -90,6 +94,9 @@ func main() {
 	var allStruct = make(map[string]string)
 	for _, tableName := range tables {
 		fmt.Printf("tableName %v \n", tableName)
+		if gen_query == tableName {
+			continue
+		}
 		structName := dbmeta.FmtFieldName(tableName)
 		structName = inflection.Singular(structName)
 		//	structNames = append(structNames, structName)
@@ -99,6 +106,9 @@ func main() {
 	// generate go files for each table
 	for _, tableName := range tables {
 		fmt.Printf("tableName %v \n", tableName)
+		if gen_query == tableName {
+			continue
+		}
 		structName := dbmeta.FmtFieldName(tableName)
 		structName = inflection.Singular(structName)
 		structNames = append(structNames, structName)
