@@ -65,7 +65,7 @@ func genRouters(apiName string, structNames []string) {
 }
 
 //genControllers
-func genControllers(apiName, tableName, packageName, structName string) {
+func genControllers(apiName, apiRouter, tableName, packageName, structName string, richFields []string) {
 	tplCtl, err := getTemplate(gtmpl.ControllerTmpl)
 	if err != nil {
 		fmt.Println("Error in loading controller template: " + err.Error())
@@ -80,6 +80,7 @@ func genControllers(apiName, tableName, packageName, structName string) {
 	if e != nil {
 		fmt.Println("\nError in EqualQueryColums : " + e.Error())
 	}
+	fmt.Printf("\nRichFields is %v : ", richFields)
 	//write api
 	var buf bytes.Buffer
 	err = tplCtl.Execute(&buf, map[string]interface{}{
@@ -88,15 +89,19 @@ func genControllers(apiName, tableName, packageName, structName string) {
 		"EqualQueryCols":   v,
 		"BetweenQueryCols": q,
 		"LikeQueryCols":    l,
+		"ApiRouter":        apiRouter,
+		"RichFields":       richFields,
 	})
 	if err != nil {
 		fmt.Println("\nError in rendering controller: " + err.Error())
 		return
 	}
+	//
 	data, err := format.Source(buf.Bytes())
 	if err != nil {
-		fmt.Println("Error in formating source: " + err.Error())
-		return
+		fmt.Println("\n Error in formating source: " + err.Error())
+		fmt.Println(string(buf.Bytes()))
+		//	return
 	}
 	ioutil.WriteFile(filepath.Join(apiName, inflection.Singular(tableName)+".go"), data, 0777)
 }

@@ -54,18 +54,18 @@ const (
 func main() {
 	// Username is required
 	if sqlConnStr == nil || *sqlConnStr == "" {
-		fmt.Println("sql connection string is required! Add it with --connstr=s")
+		fmt.Println("\nsql connection string is required! Add it with --connstr=s")
 		return
 	}
 
 	if sqlDatabase == nil || *sqlDatabase == "" {
-		fmt.Println("Database can not be null")
+		fmt.Println("\nDatabase can not be null")
 		return
 	}
 
 	var db, err = sql.Open(*sqlType, *sqlConnStr)
 	if err != nil {
-		fmt.Println("Error in open database: " + err.Error())
+		fmt.Println("\nError in open database: " + err.Error())
 		return
 	}
 	defer db.Close()
@@ -77,7 +77,7 @@ func main() {
 	} else {
 		tables, err = schema.TableNames(db)
 		if err != nil {
-			fmt.Println("Error in fetching tables information from mysql information schema")
+			fmt.Println("\nError in fetching tables information from mysql information schema")
 			return
 		}
 	}
@@ -86,14 +86,15 @@ func main() {
 		*packageName = "generated"
 	}
 	os.Mkdir("model", 0777)
-	apiName := "controller"
+	ctlPackage := "controller"
+	apiRouter := "/man/v1/api/"
 	if *rest {
-		os.Mkdir(apiName, 0777)
+		os.Mkdir(ctlPackage, 0777)
 	}
 	var structNames []string
 	var allStruct = make(map[string]string)
 	for _, tableName := range tables {
-		fmt.Printf("tableName %v \n", tableName)
+		fmt.Printf("\n\ntableName %v ", tableName)
 		if gen_query == tableName {
 			continue
 		}
@@ -105,7 +106,7 @@ func main() {
 
 	// generate go files for each table
 	for _, tableName := range tables {
-		fmt.Printf("tableName %v \n", tableName)
+		fmt.Printf("\n\ntableName %v ", tableName)
 		if gen_query == tableName {
 			continue
 		}
@@ -115,13 +116,13 @@ func main() {
 		modelInfo := dbmeta.GenerateStruct(db, allStruct, tableName, structName, "model", *jsonAnnotation, *gormAnnotation, *gureguTypes)
 		genModel(modelInfo, tableName)
 		if *rest {
-			genControllers(apiName, tableName, *packageName, structName)
+			genControllers(ctlPackage, apiRouter, tableName, *packageName, structName, modelInfo.RichFields)
 		}
 	}
 	//genDbMigrate
 	genDbMigrate(structNames)
 	//RouterTmpl
 	if *rest {
-		genRouters(apiName, structNames)
+		genRouters(ctlPackage, structNames)
 	}
 }

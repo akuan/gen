@@ -25,16 +25,14 @@ func config{{pluralize .StructName}}Router(router *gin.RouterGroup) {
 // @Produce  json
 // @Param page query string false "第几页，>=1"
 // @Param pagesize  query string false  "分页大小,默认10"
-// @Param order query string false "排序列和排序方式，空格分隔,列: id desc"
-{{range .EqualQueryCols}}// @Param {{.Stype}} query string false "{{.Stype}}"
-{{end}}
-{{range .BetweenQueryCols}}// @Param {{.Stype}}Start query string false "{{.Stype}}Start"
-// @Param {{.Stype}}End query string false "{{.Stype}}End"{{end}}
-{{range .LikeQueryCols}}// @Param {{.Stype}} query string false "{{.Stype}}"
-{{end}}
+// @Param order query string false "排序列和排序方式，空格分隔,列: id desc"{{range .EqualQueryCols}}
+// @Param {{.Stype}} query string false "{{.Stype}}"{{end}}{{range .BetweenQueryCols}}
+// @Param {{.Stype}}Start query string false "{{.Stype}}Start"
+// @Param {{.Stype}}End query string false "{{.Stype}}End"{{end}}{{range .LikeQueryCols}}
+// @Param {{.Stype}} query string false "{{.Stype}}"{{end}}
 // @Success 200 {object} model.JsonResult "{"code":0,"data":[model.{{.StructName}}],"msg":"ok","success":true}"
 // @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
-// @Router /api/{{.StructName | toLower}}  [GET]
+// @Router {{.ApiRouter}}{{.StructName | toLower}}  [GET]
 func GetAll{{pluralize .StructName}}(c *gin.Context) {
 	page, pagesize := parsePageParam(c)
 	offset := (page - 1) * pagesize
@@ -47,8 +45,8 @@ func GetAll{{pluralize .StructName}}(c *gin.Context) {
 	if order == "" {
 		order="id"
 	}
-	tx = tx.Order(order)
- //tx = tx.Preload("Department").Preload("Type").Preload("Status").Preload("Major")
+	tx = tx.Order(order)	{{if .RichFields}}
+  tx = tx{{range  $i, $element := .RichFields}}.Preload("{{$element}}"){{end}}	{{end}}
 	err = tx.Offset(offset).Limit(pagesize).Find(&{{pluralize .StructName | toLower}}).Error
 	if err != nil {
 		ServerError(c, err.Error())
@@ -92,11 +90,14 @@ func build{{.StructName}}Query(c *gin.Context, tx *gorm.DB) *gorm.DB {
 // @Param id path int true "ID"
 // @Success 200 {object} model.JsonResult "{"code":0,"data":model.{{.StructName}},"msg":"ok","success":true}"
 // @Success 404 {object} model.JsonResult "{"code":404,"data":{},"msg":"{{.StructName}} with id 1 Not found","success":false}"
-// @Router /api/{{.StructName | toLower}}/{id}  [GET]
+// @Router {{.ApiRouter}}{{.StructName | toLower}}/{id}  [GET]
 func Get{{.StructName}}(c *gin.Context) {
 	id := ParamInt(c, "id")
 	{{.StructName | toLower}} := &model.{{.StructName}}{}
-	if model.Db.First({{.StructName | toLower}}, id).Error != nil {
+	tx := model.Db.Model({{.StructName | toLower}}){{if .RichFields}}
+	tx = tx{{range  $i, $element := .RichFields}}.Preload("{{$element}}"){{end}}{{end}}
+	err:=tx.First({{.StructName | toLower}}, id).Error
+	if err!= nil {
 		NotFound(c, fmt.Sprintf("{{.StructName}} with id %v Not found ", id))
 		return
 	}
@@ -110,7 +111,7 @@ func Get{{.StructName}}(c *gin.Context) {
 // @Param {{.StructName}} body model.{{.StructName}} true "新增{{.StructName}}"
 // @Success 200 {object} model.JsonResult "{"code":0,"data":model.{{.StructName}},"msg":"ok","success":true}"
 // @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
-// @Router /api/{{.StructName | toLower}}   [POST]
+// @Router {{.ApiRouter}}{{.StructName | toLower}}   [POST]
 func Add{{.StructName}}(c *gin.Context) {
 	{{.StructName | toLower}} := &model.{{.StructName}}{}
    if err := c.ShouldBindJSON({{.StructName | toLower}}); err != nil {
@@ -134,7 +135,7 @@ func Add{{.StructName}}(c *gin.Context) {
 // @Success 200 {object} model.JsonResult "{"code":0,"data":model.{{.StructName}},"msg":"ok","success":true}"
 // @Success 404 {object} model.JsonResult "{"code":404,"data":{},"msg":"{{.StructName}} with id 1 Not found","success":false}"
 // @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
-// @Router /api/{{.StructName | toLower}}/{id}  [PUT]
+// @Router {{.ApiRouter}}{{.StructName | toLower}}/{id}  [PUT]
 func Update{{.StructName}}(c *gin.Context) {
     id := ParamInt(c, "id")
 
@@ -171,7 +172,7 @@ func Update{{.StructName}}(c *gin.Context) {
 // @Success 200 {object} model.JsonResult "{"code":0,"data":{},"msg":"ok","success":true}"
 // @Success 404 {object} model.JsonResult "{"code":404,"data":{},"msg":"{{.StructName}} with id 1 Not found","success":false}"
 // @Success 500 {object} model.JsonResult "{"code":500,"data":{},"msg":"服务器错误","success":false}"
-// @Router /api/{{.StructName | toLower}}/{id}  [DELETE]
+// @Router {{.ApiRouter}}{{.StructName | toLower}}/{id}  [DELETE]
 func Delete{{.StructName}}(c *gin.Context) {
 	id := ParamInt(c, "id")
 	{{.StructName | toLower}} := &model.{{.StructName}}{}

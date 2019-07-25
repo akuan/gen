@@ -14,6 +14,7 @@ type ModelInfo struct {
 	ShortStructName string
 	TableName       string
 	Fields          []string
+	RichFields      []string
 	HasDecimal      bool
 }
 
@@ -95,7 +96,7 @@ const (
 func GenerateStruct(db *sql.DB, allStruct map[string]string, tableName string, structName string,
 	pkgName string, jsonAnnotation bool, gormAnnotation bool, gureguTypes bool) *ModelInfo {
 	cols, _ := schema.Table(db, tableName)
-	fields, hasDec := generateFieldsTypes(db, allStruct, cols, 0, jsonAnnotation, gormAnnotation, gureguTypes)
+	fields, richFields, hasDec := generateFieldsTypes(db, allStruct, cols, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 
 	//fields := generateMysqlTypes(db, columnTypes, 0, jsonAnnotation, gormAnnotation, gureguTypes)
 	var modelInfo = &ModelInfo{
@@ -104,6 +105,7 @@ func GenerateStruct(db *sql.DB, allStruct map[string]string, tableName string, s
 		TableName:       tableName,
 		ShortStructName: strings.ToLower(string(structName[0])),
 		Fields:          fields,
+		RichFields:      richFields,
 		HasDecimal:      hasDec,
 	}
 	return modelInfo
@@ -111,12 +113,13 @@ func GenerateStruct(db *sql.DB, allStruct map[string]string, tableName string, s
 
 // Generate fields string
 func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql.ColumnType, depth int, jsonAnnotation bool,
-	gormAnnotation bool, gureguTypes bool) ([]string, bool) {
+	gormAnnotation bool, gureguTypes bool) ([]string, []string, bool) {
 
 	//sort.Strings(keys)
 
 	var fields []string
-	var field = ""
+	var richFields []string
+	var field string
 	var hasDec = false
 	for i, c := range columns {
 		nullable, _ := c.Nullable()
@@ -180,20 +183,21 @@ func generateFieldsTypes(db *sql.DB, allStruct map[string]string, columns []*sql
 		// golangInt64      = "int64"
 		if strings.HasSuffix(cn, "_id") && (valueType == golangInt || valueType == golangInt64) {
 			refFieldName := fieldName[:len(fieldName)-2]
-			strName := refFieldName
+			sType := refFieldName
 			_, ok := allStruct[refFieldName]
 			if !ok {
-				strName = "DicValue"
+				sType = "DicValue"
 			}
-			refField := genReferFild(c.Name(), refFieldName, strName, jsonAnnotation, gormAnnotation)
+			richFields = append(richFields, refFieldName)
+			refField := genReferField(c.Name(), refFieldName, sType, jsonAnnotation, gormAnnotation)
 			fields = append(fields, refField)
 		}
 	}
-	return fields, hasDec
+	return fields, richFields, hasDec
 }
 
-func genReferFild(reginalName, fName, sType string, jsonAnnotation bool, gormAnnotation bool) string {
-	var field = ""
+func genReferField(reginalName, fName, sType string, jsonAnnotation bool, gormAnnotation bool) string {
+	var field string
 	var annotations []string
 	if gormAnnotation == true {
 		annotations = append(annotations, fmt.Sprintf("gorm:\"save_associations:false;foreignkey:%s\"", reginalName))
