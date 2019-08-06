@@ -22,6 +22,7 @@ var (
 	sqlConnStr  = goopt.String([]string{"-c", "--connstr"}, "nil", "database connection string")
 	sqlDatabase = goopt.String([]string{"-d", "--database"}, "nil", "Database to for connection")
 	sqlTable    = goopt.String([]string{"-t", "--table"}, "", "Table to build struct from")
+	apiPath     = goopt.String([]string{"-p", "--apipath"}, "", "RESTful api api path")
 
 	packageName = goopt.String([]string{"--package"}, "", "name to set for package")
 
@@ -87,7 +88,7 @@ func main() {
 	}
 	os.Mkdir("model", 0777)
 	ctlPackage := "controller"
-	apiRouter := "/man/v1/api/"
+	//apiRouter := *apiPath //"/man/v1/api/"
 	if *rest {
 		os.Mkdir(ctlPackage, 0777)
 	}
@@ -116,7 +117,7 @@ func main() {
 		modelInfo := dbmeta.GenerateStruct(db, allStruct, tableName, structName, "model", *jsonAnnotation, *gormAnnotation, *gureguTypes)
 		genModel(modelInfo, tableName)
 		if *rest {
-			genControllers(ctlPackage, apiRouter, tableName, *packageName, structName, modelInfo.RichFields)
+			genControllers(ctlPackage, *apiPath, tableName, *packageName, structName, modelInfo.RichFields)
 		}
 	}
 	//genDbMigrate

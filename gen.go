@@ -100,8 +100,8 @@ func genControllers(apiName, apiRouter, tableName, packageName, structName strin
 	data, err := format.Source(buf.Bytes())
 	if err != nil {
 		fmt.Println("\n Error in formating source: " + err.Error())
-		fmt.Println(string(buf.Bytes()))
-		//	return
+		fmt.Println("\n Source File: \n" + string(buf.Bytes()))
+		return
 	}
 	ioutil.WriteFile(filepath.Join(apiName, inflection.Singular(tableName)+".go"), data, 0777)
 }
